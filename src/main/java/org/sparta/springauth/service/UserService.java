@@ -1,8 +1,11 @@
 package org.sparta.springauth.service;
 
+import jakarta.servlet.http.HttpServletResponse;
+import org.sparta.springauth.dto.LoginRequestDto;
 import org.sparta.springauth.dto.SignupRequestDto;
 import org.sparta.springauth.entity.User;
 import org.sparta.springauth.entity.UserRoleEnum;
+import org.sparta.springauth.jwt.JwtUtil;
 import org.sparta.springauth.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,10 +17,12 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = new JwtUtil();
     }
 
     // ADMIN_TOKEN
@@ -52,5 +57,22 @@ public class UserService {
         // 사용자 등록
         User user = new User(username, password, email, role);
         userRepository.save(user);
+    }
+
+    public void login(LoginRequestDto requestDto, HttpServletResponse res) {
+        String username = requestDto.getUsername();
+        String password = requestDto.getPassword();
+
+        //user check
+        User user = userRepository.findByUsername(username).orElseThrow(
+                () -> new IllegalArgumentException("등록된 사용자가 없습니다.")
+        );
+        //비번 확인
+        if(!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("password mismatch");
+        }
+        //jwt 생성 및 저장
+        String token  = jwtUtil.createToken(user.getUsername(), user.getRole());
+        jwtUtil.addJwtToCookie(token, res);
     }
 }

@@ -8,10 +8,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparta.springauth.entity.UserRoleEnum;
+import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.Key;
@@ -20,7 +22,6 @@ import java.util.Date;
 
 @Component
 public class JwtUtil {
-
     //jwt data 생성
     // Header KEY 값 쿠키네임값
     public static final String AUTHORIZATION_HEADER = "Authorization";
@@ -49,7 +50,7 @@ public class JwtUtil {
     public String createToken(String username, UserRoleEnum role) {
         Date date = new Date();
 
-        return BEARER_PREFIX + //배열+공백??
+        return BEARER_PREFIX +
                 Jwts.builder()
                         .setSubject(username) // 사용자 식별자값(ID)
                         .claim(AUTHORIZATION_KEY, role) // 사용자 권한
@@ -86,7 +87,7 @@ public class JwtUtil {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (SecurityException | MalformedJwtException | io.jsonwebtoken.security.SignatureException e) {
+        } catch (SecurityException | MalformedJwtException | SignatureException e) {
             logger.error("Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.");
         } catch (ExpiredJwtException e) {
             logger.error("Expired JWT token, 만료된 JWT token 입니다.");
